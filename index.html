@@ -234,9 +234,8 @@
                     
                     // Extraer variables reales de tu API (Asegúrate de que los nombres coincidan con los de tu CCT en JetEngine)
                     const isDesigned = item._ID % 2 === 0; // Solo para simular alternancia visual como en tu diseño
-                    const conceptText = item.concepto || (isDesigned ? "Post Diseñado" : "Pago de comisión");
-                    const detailsText = item.detalles || (isDesigned ? `Pizza De Verdad🍕 - Ciwok` : `Bolivares`);
-                    const dateText = item.fecha || "enero 19, 2024"; 
+                    const conceptText = item.tarea || (isDesigned ? "Post Diseñado" : "Pago de comisión");
+                    const dateText = item.cct_created || "enero 19, 2024"; 
                     const quantityText = item.cantidad ? `Cantidad: ${item.cantidad}` : (isDesigned ? "Cantidad: 4" : "Cantidad: 1");
                     
                     const amountRaw = parseFloat(item.monto) || 0;
@@ -250,7 +249,7 @@
                             <h3 class="font-bold text-gray-800 text-base">${conceptText}</h3>
                         </div>
                         <div class="flex justify-between items-center text-xs text-gray-500 mb-2">
-                            <p>${detailsText}</p>
+                            
                             <p>${dateText}</p>
                         </div>
                         <div class="flex justify-between items-center text-xs text-gray-500 pt-2 border-t border-gray-100">
