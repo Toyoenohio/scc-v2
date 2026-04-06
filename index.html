@@ -12,13 +12,14 @@
               colors: {
                 'scc-blue': '#3A77F2', 
                 'scc-bg': '#0A0F1D', 
+                'scc-dark-card': '#161B29' // Un gris azulado muy oscuro para el formulario
               }
             }
           }
         }
     </script>
 </head>
-<body class="bg-scc-bg min-h-screen text-gray-800 font-sans max-w-md mx-auto relative">
+<body class="bg-scc-bg min-h-screen text-gray-800 font-sans max-w-md mx-auto relative overflow-x-hidden">
 
     <div id="login-view" class="flex items-center justify-center min-h-screen">
         <div class="bg-white p-8 rounded-lg shadow-md w-full mx-4">
@@ -64,20 +65,73 @@
             <div id="loading" class="text-scc-blue font-semibold hidden text-center">Cargando datos...</div>
             <div id="error-message" class="text-red-500 hidden mb-4 text-center"></div>
             
-            <div id="comisiones-container" class="space-y-4">
-            </div>
+            <div id="comisiones-container" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <div id="solicitud-view" class="hidden min-h-screen bg-scc-bg pb-10">
+        <header class="flex items-center p-6 bg-scc-bg text-white border-b border-gray-800">
+            <button id="btn-volver-dashboard" class="mr-4 text-white hover:text-gray-300 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+            </button>
+            <h2 class="text-xl font-bold tracking-tight">Nueva Solicitud</h2>
+        </header>
+
+        <div class="p-6">
+            <form id="form-nueva-solicitud" class="space-y-5">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Tipo de comisión</label>
+                    <select id="sol_comision" required class="w-full p-3 bg-white text-gray-800 rounded-lg outline-none focus:ring-2 focus:ring-scc-blue appearance-none">
+                        <option value="" disabled selected>Seleccione el tipo de comisión</option>
+                        <option value="Zelle">Zelle</option>
+                        <option value="Bolivares">Bolívares</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Paypal">Paypal</option>
+                        <option value="B_Panama">Banesco Panamá</option>
+                        <option value="M_Panama">Mercantil Panamá</option>
+                        <option value="Credito PDV">Crédito PDV</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Monto</label>
+                    <input type="number" id="sol_monto" required min="0" max="5000" step="0.01" class="w-full p-3 bg-white text-gray-800 rounded-lg outline-none focus:ring-2 focus:ring-scc-blue">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Fecha*</label>
+                    <input type="date" id="sol_fecha" required class="w-full p-3 bg-white text-gray-800 rounded-lg outline-none focus:ring-2 focus:ring-scc-blue">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Observación*</label>
+                    <textarea id="sol_observacion" required rows="3" class="w-full p-3 bg-white text-gray-800 rounded-lg outline-none focus:ring-2 focus:ring-scc-blue resize-none"></textarea>
+                </div>
+
+                <button type="submit" id="btn-submit-solicitud" class="w-full mt-6 border border-[#E91E63] text-[#E91E63] hover:bg-[#E91E63] hover:text-white p-3 rounded-lg transition font-semibold">
+                    Submit
+                </button>
+            </form>
         </div>
     </div>
 
     <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm px-6 py-3 rounded-full shadow-xl transition-all duration-300 opacity-0 pointer-events-none z-50 whitespace-nowrap">
-        Esta opción aún no está disponible.
+        Mensaje
     </div>
 
     <script>
         // Referencias al DOM
         const loginView = document.getElementById('login-view');
         const dashboardView = document.getElementById('dashboard-view');
+        const solicitudView = document.getElementById('solicitud-view');
+        
         const loginForm = document.getElementById('login-form');
+        const formNuevaSolicitud = document.getElementById('form-nueva-solicitud');
+        
         const loginError = document.getElementById('login-error');
         const logoutBtn = document.getElementById('logout-btn');
         const comisionesContainer = document.getElementById('comisiones-container');
@@ -86,23 +140,34 @@
         const welcomeMessage = document.getElementById('welcome-message');
         const totalBalanceEl = document.getElementById('total-balance');
         const toast = document.getElementById('toast');
+        const btnSubmitSolicitud = document.getElementById('btn-submit-solicitud');
 
-        // Función para cambiar de vista
+        // Función para cambiar de vista (Router simple)
         function showView(view) {
+            // Ocultar todas
+            loginView.classList.add('hidden');
+            dashboardView.classList.add('hidden');
+            solicitudView.classList.add('hidden');
+
+            // Mostrar la solicitada
             if (view === 'dashboard') {
-                loginView.classList.add('hidden');
                 dashboardView.classList.remove('hidden');
                 fetchComisiones(); 
+            } else if (view === 'solicitud') {
+                solicitudView.classList.remove('hidden');
+                // Seteamos la fecha de hoy por defecto en el datepicker
+                document.getElementById('sol_fecha').valueAsDate = new Date();
             } else {
-                dashboardView.classList.add('hidden');
                 loginView.classList.remove('hidden');
                 loginForm.reset();
             }
         }
 
         // Mostrar Toast
-        function showToast(message) {
+        function showToast(message, isError = false) {
             toast.textContent = message;
+            toast.className = `fixed bottom-10 left-1/2 transform -translate-x-1/2 text-white text-sm px-6 py-3 rounded-full shadow-xl transition-all duration-300 z-50 whitespace-nowrap ${isError ? 'bg-red-600' : 'bg-gray-800'}`;
+            
             toast.classList.remove('opacity-0', 'translate-y-4');
             toast.classList.add('opacity-100', 'translate-y-0');
             
@@ -112,9 +177,13 @@
             }, 3000);
         }
 
-        // Listeners para botones de acción
+        // --- NAVEGACIÓN ---
         document.getElementById('btn-solicitud').addEventListener('click', () => {
-            showToast('La opción de Solicitud aún no está disponible.');
+            showView('solicitud');
+        });
+
+        document.getElementById('btn-volver-dashboard').addEventListener('click', () => {
+            showView('dashboard');
         });
         
         document.getElementById('btn-transferir').addEventListener('click', () => {
@@ -127,12 +196,11 @@
             if (token) showView('dashboard');
         });
 
-        // Login
+        // --- LOGIN ---
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const userVal = document.getElementById('username').value;
             const passVal = document.getElementById('password').value;
-            
             loginError.classList.add('hidden');
 
             try {
@@ -141,7 +209,6 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: userVal, password: passVal })
                 });
-
                 const data = await response.json();
 
                 if (response.ok) {
@@ -159,19 +226,17 @@
             }
         });
 
-        // Logout
+        // --- LOGOUT ---
         logoutBtn.addEventListener('click', () => {
-            setTimeout(() => {
-                localStorage.removeItem('wp_token');
-                localStorage.removeItem('wp_username');
-                localStorage.removeItem('wp_display_name');
-                comisionesContainer.innerHTML = '';
-                totalBalanceEl.textContent = '$0.00';
-                showView('login');
-            }, 200);
+            localStorage.removeItem('wp_token');
+            localStorage.removeItem('wp_username');
+            localStorage.removeItem('wp_display_name');
+            comisionesContainer.innerHTML = '';
+            totalBalanceEl.textContent = '$0.00';
+            showView('login');
         });
 
-        // Fetch de comisiones y cálculo de balance
+        // --- FETCH COMISIONES ---
         async function fetchComisiones() {
             const token = localStorage.getItem('wp_token');
             const username = localStorage.getItem('wp_username'); 
@@ -184,15 +249,12 @@
 
             welcomeMessage.textContent = `Hola, ${displayName || username}.`;
             welcomeMessage.classList.remove('hidden');
-            
             loadingIndicator.classList.remove('hidden');
             errorMessage.classList.add('hidden');
             comisionesContainer.innerHTML = ''; 
 
             try {
-                const apiUrl = `https://scc.ciwok.com/wp-json/jet-cct/comisiones_dec/?usuario=${username}`;
-
-                const response = await fetch(apiUrl, {
+                const response = await fetch(`https://scc.ciwok.com/wp-json/jet-cct/comisiones_dec/?usuario=${username}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -200,13 +262,7 @@
                     }
                 });
 
-                if (!response.ok) {
-                    if (response.status === 401 || response.status === 403) {
-                        logoutBtn.click();
-                        throw new Error('Sesión expirada.');
-                    }
-                    throw new Error('Error al conectar con la base de datos.');
-                }
+                if (!response.ok) throw new Error(response.status === 401 ? 'Sesión expirada.' : 'Error al conectar.');
 
                 const data = await response.json();
                 loadingIndicator.classList.add('hidden');
@@ -217,30 +273,23 @@
                     return;
                 }
 
-                // --- CÁLCULO DEL BALANCE TOTAL ---
-                const balanceCalculado = data.reduce((acc, item) => {
-                    // Reemplaza 'item.monto' si la key en tu base de datos de JetEngine es distinta
-                    const cantidad = parseFloat(item.monto) || 0; 
-                    return acc + cantidad;
-                }, 0);
-
-                // Formatear a moneda (ej: $1,390.00)
+                // Balance
+                const balanceCalculado = data.reduce((acc, item) => acc + (parseFloat(item.monto_comision || item.monto) || 0), 0);
                 totalBalanceEl.textContent = `$${balanceCalculado.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-                // Renderizar las tarjetas
-                data.forEach((item) => {
+                // Renderizar
+                data.reverse().forEach((item) => { // reverse para mostrar las más nuevas primero
                     const card = document.createElement('div');
                     card.className = 'bg-white p-5 rounded-2xl shadow-md border border-gray-100';
                     
-                    // Extraer variables reales de tu API (Asegúrate de que los nombres coincidan con los de tu CCT en JetEngine)
-                    const isDesigned = item._ID % 2 === 0; // Solo para simular alternancia visual como en tu diseño
-                    const conceptText = item.tarea || (isDesigned ? "Post Diseñado" : "Pago de comisión");
-                    const dateText = item.cct_created || "enero 19, 2024"; 
-                    const quantityText = item.cantidad ? `Cantidad: ${item.cantidad}` : (isDesigned ? "Cantidad: 4" : "Cantidad: 1");
+                    const conceptText = item.comision || "Registro";
+                    const detailsText = item.observacion || "Sin detalles";
+                    const dateText = item.fecha || "Sin fecha"; 
+                    const quantityText = item.cantidad ? `Cantidad: ${item.cantidad}` : "";
                     
-                    const amountRaw = parseFloat(item.monto) || 0;
+                    // Priorizamos el campo monto_comision calculado, si no existe usamos monto
+                    const amountRaw = parseFloat(item.monto_comision || item.monto) || 0;
                     const isNegative = amountRaw < 0;
-                    // Formatear el monto individual
                     const formattedAmount = Math.abs(amountRaw).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     const displayAmount = isNegative ? `-$${formattedAmount}` : `$${formattedAmount}`;
 
@@ -249,7 +298,7 @@
                             <h3 class="font-bold text-gray-800 text-base">${conceptText}</h3>
                         </div>
                         <div class="flex justify-between items-center text-xs text-gray-500 mb-2">
-                            
+                            <p class="truncate pr-2 max-w-[60%]">${detailsText}</p>
                             <p>${dateText}</p>
                         </div>
                         <div class="flex justify-between items-center text-xs text-gray-500 pt-2 border-t border-gray-100">
@@ -262,10 +311,69 @@
 
             } catch (err) {
                 loadingIndicator.classList.add('hidden');
-                errorMessage.textContent = err.message;
-                errorMessage.classList.remove('hidden');
+                if (err.message === 'Sesión expirada.') logoutBtn.click();
+                else {
+                    errorMessage.textContent = err.message;
+                    errorMessage.classList.remove('hidden');
+                }
             }
         }
+
+        // --- ENVIAR NUEVA SOLICITUD (POST API) ---
+        formNuevaSolicitud.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = localStorage.getItem('wp_token');
+            const username = localStorage.getItem('wp_username');
+            
+            if (!token) return showView('login');
+
+            // Preparar UI
+            const originalBtnText = btnSubmitSolicitud.textContent;
+            btnSubmitSolicitud.textContent = 'Enviando...';
+            btnSubmitSolicitud.disabled = true;
+
+            // Obtener valores
+            const montoOriginal = parseFloat(document.getElementById('sol_monto').value);
+            // Replicamos la lógica de tu campo calculado en JetEngine
+            const montoComision = (montoOriginal * -1).toString();
+
+            // Construir JSON mapeando exactamente los nombres (name) de tu formulario JetEngine
+            const payload = {
+                usuario: username, // Inyectamos el usuario logueado dinámicamente
+                comision: document.getElementById('sol_comision').value,
+                monto: montoOriginal.toString(),
+                monto_comision: montoComision,
+                fecha: document.getElementById('sol_fecha').value,
+                observacion: document.getElementById('sol_observacion').value
+            };
+
+            try {
+                const response = await fetch('https://scc.ciwok.com/wp-json/jet-cct/comisiones_dec', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    showToast('Solicitud enviada con éxito');
+                    formNuevaSolicitud.reset();
+                    showView('dashboard'); // Volvemos al dashboard (que se actualizará automáticamente)
+                } else {
+                    const errData = await response.json();
+                    throw new Error(errData.message || 'Error al enviar la solicitud');
+                }
+            } catch (error) {
+                showToast(error.message, true);
+            } finally {
+                btnSubmitSolicitud.textContent = originalBtnText;
+                btnSubmitSolicitud.disabled = false;
+            }
+        });
+
     </script>
 </body>
 </html>
