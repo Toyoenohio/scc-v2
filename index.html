@@ -12,7 +12,7 @@
               colors: {
                 'scc-blue': '#3A77F2', 
                 'scc-bg': '#0A0F1D', 
-                'scc-dark-card': '#161B29' // Un gris azulado muy oscuro para el formulario
+                'scc-dark-card': '#161B29'
               }
             }
           }
@@ -108,8 +108,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Observación*</label>
-                    <textarea id="sol_observacion" required rows="3" class="w-full p-3 bg-white text-gray-800 rounded-lg outline-none focus:ring-2 focus:ring-scc-blue resize-none"></textarea>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Observaciones*</label>
+                    <textarea id="sol_observaciones" required rows="3" class="w-full p-3 bg-white text-gray-800 rounded-lg outline-none focus:ring-2 focus:ring-scc-blue resize-none"></textarea>
                 </div>
 
                 <button type="submit" id="btn-submit-solicitud" class="w-full mt-6 border border-[#E91E63] text-[#E91E63] hover:bg-[#E91E63] hover:text-white p-3 rounded-lg transition font-semibold">
@@ -142,20 +142,17 @@
         const toast = document.getElementById('toast');
         const btnSubmitSolicitud = document.getElementById('btn-submit-solicitud');
 
-        // Función para cambiar de vista (Router simple)
+        // Función para cambiar de vista
         function showView(view) {
-            // Ocultar todas
             loginView.classList.add('hidden');
             dashboardView.classList.add('hidden');
             solicitudView.classList.add('hidden');
 
-            // Mostrar la solicitada
             if (view === 'dashboard') {
                 dashboardView.classList.remove('hidden');
                 fetchComisiones(); 
             } else if (view === 'solicitud') {
                 solicitudView.classList.remove('hidden');
-                // Seteamos la fecha de hoy por defecto en el datepicker
                 document.getElementById('sol_fecha').valueAsDate = new Date();
             } else {
                 loginView.classList.remove('hidden');
@@ -177,18 +174,10 @@
             }, 3000);
         }
 
-        // --- NAVEGACIÓN ---
-        document.getElementById('btn-solicitud').addEventListener('click', () => {
-            showView('solicitud');
-        });
-
-        document.getElementById('btn-volver-dashboard').addEventListener('click', () => {
-            showView('dashboard');
-        });
-        
-        document.getElementById('btn-transferir').addEventListener('click', () => {
-            showToast('La opción de Transferencia aún no está disponible.');
-        });
+        // Navegación
+        document.getElementById('btn-solicitud').addEventListener('click', () => showView('solicitud'));
+        document.getElementById('btn-volver-dashboard').addEventListener('click', () => showView('dashboard'));
+        document.getElementById('btn-transferir').addEventListener('click', () => showToast('La opción de Transferencia aún no está disponible.'));
 
         // Verificar sesión inicial
         document.addEventListener('DOMContentLoaded', () => {
@@ -196,7 +185,7 @@
             if (token) showView('dashboard');
         });
 
-        // --- LOGIN ---
+        // Login
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const userVal = document.getElementById('username').value;
@@ -226,7 +215,7 @@
             }
         });
 
-        // --- LOGOUT ---
+        // Logout
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('wp_token');
             localStorage.removeItem('wp_username');
@@ -236,16 +225,13 @@
             showView('login');
         });
 
-        // --- FETCH COMISIONES ---
+        // Fetch Comisiones
         async function fetchComisiones() {
             const token = localStorage.getItem('wp_token');
             const username = localStorage.getItem('wp_username'); 
             const displayName = localStorage.getItem('wp_display_name');
             
-            if (!token || !username) {
-                showView('login');
-                return;
-            }
+            if (!token || !username) return showView('login');
 
             welcomeMessage.textContent = `Hola, ${displayName || username}.`;
             welcomeMessage.classList.remove('hidden');
@@ -273,21 +259,19 @@
                     return;
                 }
 
-                // Balance
                 const balanceCalculado = data.reduce((acc, item) => acc + (parseFloat(item.monto_comision || item.monto) || 0), 0);
                 totalBalanceEl.textContent = `$${balanceCalculado.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-                // Renderizar
-                data.reverse().forEach((item) => { // reverse para mostrar las más nuevas primero
+                data.reverse().forEach((item) => { 
                     const card = document.createElement('div');
                     card.className = 'bg-white p-5 rounded-2xl shadow-md border border-gray-100';
                     
                     const conceptText = item.comision || "Registro";
-                    const detailsText = item.observacion || "Sin detalles";
+                    // Actualizado para buscar item.observaciones (dejé item.observacion por si hay registros viejos)
+                    const detailsText = item.observaciones || item.observacion || "Sin detalles";
                     const dateText = item.fecha || "Sin fecha"; 
                     const quantityText = item.cantidad ? `Cantidad: ${item.cantidad}` : "";
                     
-                    // Priorizamos el campo monto_comision calculado, si no existe usamos monto
                     const amountRaw = parseFloat(item.monto_comision || item.monto) || 0;
                     const isNegative = amountRaw < 0;
                     const formattedAmount = Math.abs(amountRaw).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -328,24 +312,24 @@
             
             if (!token) return showView('login');
 
-            // Preparar UI
             const originalBtnText = btnSubmitSolicitud.textContent;
             btnSubmitSolicitud.textContent = 'Enviando...';
             btnSubmitSolicitud.disabled = true;
 
-            // Obtener valores
             const montoOriginal = parseFloat(document.getElementById('sol_monto').value);
-            // Replicamos la lógica de tu campo calculado en JetEngine
             const montoComision = (montoOriginal * -1).toString();
 
-            // Construir JSON mapeando exactamente los nombres (name) de tu formulario JetEngine
+            // JSON con los nuevos campos ocultos estáticos integrados
             const payload = {
-                usuario: username, // Inyectamos el usuario logueado dinámicamente
+                usuario: username,
                 comision: document.getElementById('sol_comision').value,
                 monto: montoOriginal.toString(),
                 monto_comision: montoComision,
                 fecha: document.getElementById('sol_fecha').value,
-                observacion: document.getElementById('sol_observacion').value
+                observaciones: document.getElementById('sol_observaciones').value, // Actualizado a observaciones
+                tarea: "Pago de comisión", // Nuevo campo fijo
+                grupo: "sol_comision",     // Nuevo campo fijo
+                status: "draft"            // Nuevo campo fijo
             };
 
             try {
@@ -361,7 +345,7 @@
                 if (response.ok) {
                     showToast('Solicitud enviada con éxito');
                     formNuevaSolicitud.reset();
-                    showView('dashboard'); // Volvemos al dashboard (que se actualizará automáticamente)
+                    showView('dashboard'); 
                 } else {
                     const errData = await response.json();
                     throw new Error(errData.message || 'Error al enviar la solicitud');
