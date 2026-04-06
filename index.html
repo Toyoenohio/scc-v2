@@ -262,7 +262,23 @@
                 const balanceCalculado = data.reduce((acc, item) => acc + (parseFloat(item.monto_comision || item.monto) || 0), 0);
                 totalBalanceEl.textContent = `$${balanceCalculado.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-                data.reverse().forEach((item) => { 
+                // --- NUEVO: ORDENAMIENTO EXPLÍCITO (Más nuevo a más viejo) ---
+                data.sort((a, b) => {
+                    const dateA = new Date(a.fecha).getTime();
+                    const dateB = new Date(b.fecha).getTime();
+                    
+                    // Si ambas tienen una fecha válida, las ordenamos por fecha descendente
+                    if (!isNaN(dateA) && !isNaN(dateB)) {
+                        if (dateB !== dateA) {
+                            return dateB - dateA; 
+                        }
+                    }
+                    // Si las fechas son iguales (o no hay fecha), el registro con ID más alto va primero (fue creado después)
+                    return b._ID - a._ID; 
+                });
+
+                // Renderizar las tarjetas ya ordenadas
+                data.forEach((item) => { 
                     const card = document.createElement('div');
                     card.className = 'bg-white p-5 rounded-2xl shadow-md border border-gray-100';
                     
