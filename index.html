@@ -267,7 +267,6 @@
                     card.className = 'bg-white p-5 rounded-2xl shadow-md border border-gray-100';
                     
                     const conceptText = item.comision || "Registro";
-                    // Actualizado para buscar item.observaciones (dejé item.observacion por si hay registros viejos)
                     const detailsText = item.observaciones || item.observacion || "Sin detalles";
                     const dateText = item.fecha || "Sin fecha"; 
                     const quantityText = item.cantidad ? `Cantidad: ${item.cantidad}` : "";
@@ -316,20 +315,24 @@
             btnSubmitSolicitud.textContent = 'Enviando...';
             btnSubmitSolicitud.disabled = true;
 
-            const montoOriginal = parseFloat(document.getElementById('sol_monto').value);
-            const montoComision = (montoOriginal * -1).toString();
+            // Extraemos los valores del formulario
+            const tipoComision = document.getElementById('sol_comision').value;
+            const montoPositivo = parseFloat(document.getElementById('sol_monto').value);
+            
+            // Calculamos el monto negativo asegurando dos decimales para el formato de moneda
+            const montoNegativo = (montoPositivo * -1).toFixed(2);
 
-            // JSON con los nuevos campos ocultos estáticos integrados
+            // Armamos el JSON
             const payload = {
                 usuario: username,
-                comision: document.getElementById('sol_comision').value,
-                monto: montoOriginal.toString(),
-                monto_comision: montoComision,
+                comision: tipoComision,
+                monto: montoNegativo,          // Se envía el monto en negativo directamente
+                monto_comision: montoNegativo, // Se envía también aquí en negativo
                 fecha: document.getElementById('sol_fecha').value,
-                observaciones: document.getElementById('sol_observaciones').value, // Actualizado a observaciones
-                tarea: "Pago de comisión", // Nuevo campo fijo
-                grupo: "sol_comision",     // Nuevo campo fijo
-                status: "draft"            // Nuevo campo fijo
+                observaciones: document.getElementById('sol_observaciones').value,
+                tarea: "Pago de comisión",
+                grupo: tipoComision,           // Asignamos dinámicamente el valor del select
+                status: "draft"
             };
 
             try {
