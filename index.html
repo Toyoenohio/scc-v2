@@ -208,9 +208,13 @@
             }, 3000);
         }
 
+        // Lista de usuarios admin permitidos
+        const ADMIN_USERS = ['Donatosm', 'admin', 'JulianaLanzadf'];
+
         // Verificar si usuario es admin
         function checkIsAdmin() {
-            return localStorage.getItem('wp_role') === 'administrator';
+            const username = localStorage.getItem('wp_username');
+            return ADMIN_USERS.includes(username);
         }
 
         // Mostrar/ocultar navegación de admin
@@ -368,20 +372,6 @@
                     localStorage.setItem('wp_token', data.token);
                     localStorage.setItem('wp_username', userVal); 
                     localStorage.setItem('wp_display_name', data.user_display_name);
-                    // Guardar rol si está disponible
-                    if (data.user_role) {
-                        localStorage.setItem('wp_role', data.user_role);
-                    } else {
-                        // Intentar obtener rol del usuario via API
-                        fetch('https://scc.ciwok.com/wp-json/wp/v2/users/me', {
-                            headers: { 'Authorization': `Bearer ${data.token}` }
-                        }).then(r => r.json()).then(userData => {
-                            if (userData.roles && userData.roles.length > 0) {
-                                localStorage.setItem('wp_role', userData.roles[0]);
-                            }
-                            toggleAdminNav();
-                        }).catch(() => {});
-                    }
                     toggleAdminNav();
                     showView('dashboard');
                 } else {
@@ -399,7 +389,6 @@
             localStorage.removeItem('wp_token');
             localStorage.removeItem('wp_username');
             localStorage.removeItem('wp_display_name');
-            localStorage.removeItem('wp_role');
             document.getElementById('admin-nav').classList.add('hidden');
             comisionesContainer.innerHTML = '';
             totalBalanceEl.textContent = '$0.00';
