@@ -366,12 +366,57 @@
         document.getElementById('btn-volver-dashboard').addEventListener('click', () => showView('dashboard'));
         document.getElementById('btn-transferir').addEventListener('click', () => showToast('La opción de Transferencia aún no está disponible.'));
 
-        // Registrar Service Worker
+        // Registrar Service Worker con manejo de actualizaciones
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('SW registrado'))
+                .then(reg => {
+                    console.log('SW registrado');
+                    
+                    // Detectar actualizaciones
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // Hay una nueva versión disponible
+                                console.log('[App] Nueva versión disponible');
+                                
+                                // Mostrar notificación al usuario
+                                if (confirm('¡Hay una nueva versión de la app disponible! ¿Deseas actualizar ahora?')) {
+                                    newWorker.postMessage('skipWaiting');
+                                    window.location.reload();
+                                }
+                            }
+                        });
+                    });
+                    
+                    // Verificar actualizaciones cada 5 minutos
+                    setInterval(() => {
+                        reg.update();
+                    }, 300000);
+                })
                 .catch(err => console.log('SW error:', err));
+            
+            // Escuchar mensajes del SW
+            navigator.serviceWorker.addEventListener('message', event => {
+                if (event.data === 'reload') {
+                    window.location.reload();
+                }
+            });
         }
+
+        // Botón manual para forzar actualización (útil para testing)
+        window.forceUpdate = function() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    if (reg) {
+                        reg.update().then(() => {
+                            console.log('[App] Verificación de actualización forzada');
+                            showToast('Buscando actualizaciones...');
+                        });
+                    }
+                });
+            }
+        };
 
         // Verificar sesión inicial
         document.addEventListener('DOMContentLoaded', () => {
