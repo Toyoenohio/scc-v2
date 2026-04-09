@@ -318,7 +318,7 @@
 
             try {
                 const response = await fetch(`https://scc.ciwok.com/wp-json/jet-cct/comisiones_dec/${id}`, {
-                    method: 'PUT',
+                    method: 'POST',  // JetEngine usa POST, no PUT
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
