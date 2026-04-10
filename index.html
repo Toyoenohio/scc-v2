@@ -217,14 +217,15 @@
             }, 3000);
         }
 
-        // Lista de usuarios admin permitidos
-        const ADMIN_USERS = ['Donatosm', 'admin', 'JulianaLanzadf'];
+        // Lista de usuarios admin permitidos (case-insensitive)
+        const ADMIN_USERS = ['donatosm', 'donato', 'admin', 'julianalanzadf'];
 
         // Verificar si usuario es admin
         function checkIsAdmin() {
             const username = localStorage.getItem('wp_username');
-            const isAdmin = ADMIN_USERS.includes(username);
-            console.log('[Admin Check] Usuario:', username, 'Es admin:', isAdmin);
+            const normalizedUsername = username ? username.toLowerCase().trim() : '';
+            const isAdmin = ADMIN_USERS.includes(normalizedUsername);
+            console.log('[Admin Check] Usuario original:', username, 'Normalizado:', normalizedUsername, 'Es admin:', isAdmin);
             return isAdmin;
         }
 
