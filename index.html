@@ -237,14 +237,24 @@
             if (checkIsAdmin()) {
                 console.log('[Admin Nav] Mostrando menú admin');
                 adminNav.classList.remove('hidden');
-                // Forzar reflow para asegurar que se muestre
+                // Forzar display y visibilidad
                 adminNav.style.display = 'block';
+                adminNav.style.visibility = 'visible';
+                adminNav.style.opacity = '1';
             } else {
                 console.log('[Admin Nav] Ocultando menú admin');
                 adminNav.classList.add('hidden');
                 adminNav.style.display = 'none';
             }
         }
+
+        // Verificar admin nav periódicamente (cada 2 segundos)
+        setInterval(() => {
+            if (document.getElementById('dashboard-view').classList.contains('hidden') === false ||
+                document.getElementById('admin-comisiones-view').classList.contains('hidden') === false) {
+                toggleAdminNav();
+            }
+        }, 2000);
 
         // Update active nav state
         function setActiveNav(view) {
