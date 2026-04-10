@@ -184,6 +184,8 @@
         const loginView = document.getElementById('login-view');
         const dashboardView = document.getElementById('dashboard-view');
         const solicitudView = document.getElementById('solicitud-view');
+        const adminComisionesView = document.getElementById('admin-comisiones-view');
+        const userDetailView = document.getElementById('user-detail-view');
         
         const loginForm = document.getElementById('login-form');
         const formNuevaSolicitud = document.getElementById('form-nueva-solicitud');
@@ -203,8 +205,8 @@
             loginView.classList.add('hidden');
             dashboardView.classList.add('hidden');
             solicitudView.classList.add('hidden');
-            document.getElementById('admin-comisiones-view').classList.add('hidden');
-            document.getElementById('user-detail-view').classList.add('hidden');
+            adminComisionesView.classList.add('hidden');
+            userDetailView.classList.add('hidden');
 
             if (view === 'dashboard') {
                 dashboardView.classList.remove('hidden');
@@ -215,11 +217,11 @@
                 document.getElementById('sol_fecha').valueAsDate = new Date();
                 toggleAdminNav();
             } else if (view === 'admin-comisiones') {
-                document.getElementById('admin-comisiones-view').classList.remove('hidden');
+                adminComisionesView.classList.remove('hidden');
                 toggleAdminNav();
                 fetchAdminComisiones();
             } else if (view === 'user-detail') {
-                document.getElementById('user-detail-view').classList.remove('hidden');
+                userDetailView.classList.remove('hidden');
                 toggleAdminNav();
             } else {
                 loginView.classList.remove('hidden');
@@ -249,38 +251,23 @@
         function checkIsAdmin() {
             const username = localStorage.getItem('wp_username');
             const normalizedUsername = username ? username.toLowerCase().trim() : '';
-            const isAdmin = ADMIN_USERS.includes(normalizedUsername);
-            console.log('[Admin Check] Usuario original:', username, 'Normalizado:', normalizedUsername, 'Es admin:', isAdmin);
-            return isAdmin;
+            return ADMIN_USERS.includes(normalizedUsername);
         }
 
-        // Mostrar/ocultar navegación de admin - siempre llamar al cargar vista
+        // Mostrar/ocultar navegación de admin
         function toggleAdminNav() {
             const adminNav = document.getElementById('admin-nav');
-            const username = localStorage.getItem('wp_username');
-            console.log('[Admin Nav] Verificando navegación para:', username);
             
             if (checkIsAdmin()) {
-                console.log('[Admin Nav] Mostrando menú admin');
                 adminNav.classList.remove('hidden');
-                // Forzar display y visibilidad
                 adminNav.style.display = 'block';
                 adminNav.style.visibility = 'visible';
                 adminNav.style.opacity = '1';
             } else {
-                console.log('[Admin Nav] Ocultando menú admin');
                 adminNav.classList.add('hidden');
                 adminNav.style.display = 'none';
             }
         }
-
-        // Verificar admin nav periódicamente (cada 2 segundos)
-        setInterval(() => {
-            if (document.getElementById('dashboard-view').classList.contains('hidden') === false ||
-                document.getElementById('admin-comisiones-view').classList.contains('hidden') === false) {
-                toggleAdminNav();
-            }
-        }, 2000);
 
         // Update active nav state
         function setActiveNav(view) {
@@ -346,7 +333,7 @@
                     </div>
                     <p class="text-blue-200 text-xs mt-1">${data.length} solicitud(es) en espera</p>
                 `;
-                comisionesContainer.appendChild(totalBlock);
+                listEl.appendChild(totalBlock);
 
                 data.forEach((item) => {
                     const card = document.createElement('div');
@@ -384,12 +371,12 @@
                             Marcar como Pagado
                         </button>
                     `;
-                    comisionesContainer.appendChild(card);
+                    listEl.appendChild(card);
                 });
 
             } catch (err) {
                 loadingEl.classList.add('hidden');
-                comisionesContainer.innerHTML = `<p class="text-red-500 text-center">${err.message}</p>`;
+                listEl.innerHTML = `<p class="text-red-500 text-center">${err.message}</p>`;
             }
         }
 
@@ -549,7 +536,6 @@
                     localStorage.setItem('wp_token', data.token);
                     localStorage.setItem('wp_username', userVal); 
                     localStorage.setItem('wp_display_name', data.user_display_name);
-                    toggleAdminNav();
                     showView('dashboard');
                 } else {
                     loginError.textContent = data.message || 'Credenciales inválidas';
@@ -609,38 +595,13 @@
                 const balanceCalculado = data.reduce((acc, item) => acc + (parseFloat(item.monto_comision || item.monto) || 0), 0);
                 totalBalanceEl.textContent = `$${balanceCalculado.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-                // --- NUEVO: ORDENAMIENTO EXPLÍCITO (Más nuevo a más viejo) ---
+                // Ordenamiento
                 data.sort((a, b) => {
                     const dateA = new Date(a.fecha).getTime();
                     const dateB = new Date(b.fecha).getTime();
-                    
-                    // Si ambas tienen una fecha válida, las ordenamos por fecha descendente
-                    if (!isNaN(dateA) && !isNaN(dateB)) {
-                        if (dateB !== dateA) {
-                            return dateB - dateA; 
-                        }
-                    }
-                    // Si las fechas son iguales (o no hay fecha), el registro con ID más alto va primero (fue creado después)
+                    if (!isNaN(dateA) && !isNaN(dateB) && dateB !== dateA) return dateB - dateA; 
                     return b._ID - a._ID; 
                 });
-
-                // Renderizar las tarjetas ya ordenadas
-                // Calcular sumatoria total
-                const totalPendiente = data.reduce((sum, item) => {
-                    return sum + Math.abs(parseFloat(item.monto_comision || item.monto) || 0);
-                }, 0);
-
-                // Mostrar bloque de sumatoria
-                const totalBlock = document.createElement('div');
-                totalBlock.className = 'bg-scc-blue p-4 rounded-xl mb-4';
-                totalBlock.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <span class="text-white text-sm font-medium">Total Comisiones Pendientes:</span>
-                        <span class="text-white text-2xl font-bold">$${totalPendiente.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    </div>
-                    <p class="text-blue-200 text-xs mt-1">${data.length} solicitud(es) en espera</p>
-                `;
-                comisionesContainer.appendChild(totalBlock);
 
                 data.forEach((item) => { 
                     const card = document.createElement('div');
@@ -697,23 +658,19 @@
             btnSubmitSolicitud.textContent = 'Enviando...';
             btnSubmitSolicitud.disabled = true;
 
-            // Extraemos los valores del formulario
             const tipoComision = document.getElementById('sol_comision').value;
             const montoPositivo = parseFloat(document.getElementById('sol_monto').value);
-            
-            // Calculamos el monto negativo asegurando dos decimales para el formato de moneda
             const montoNegativo = (montoPositivo * -1).toFixed(2);
 
-            // Armamos el JSON
             const payload = {
                 usuario: username,
                 comision: tipoComision,
-                monto: montoNegativo,          // Se envía el monto en negativo directamente
-                monto_comision: montoNegativo, // Se envía también aquí en negativo
+                monto: montoNegativo,
+                monto_comision: montoNegativo,
                 fecha: document.getElementById('sol_fecha').value,
                 observaciones: document.getElementById('sol_observaciones').value,
                 tarea: "Pago de comisión",
-                grupo: tipoComision,           // Asignamos dinámicamente el valor del select
+                grupo: tipoComision,
                 cct_status: "draft",
                 cantidad: "1"
             };
