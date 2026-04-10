@@ -471,20 +471,36 @@
                     ultimasSolicitudes.forEach(item => {
                         const amountRaw = parseFloat(item.monto_comision || item.monto) || 0;
                         const formattedAmount = Math.abs(amountRaw).toLocaleString('en-US', { minimumFractionDigits: 2 });
-                        const statusColor = item.cct_status === 'published' ? 'text-green-400' : 'text-yellow-400';
                         
                         const card = document.createElement('div');
                         card.className = 'bg-scc-dark-card p-4 rounded-xl border border-gray-800';
                         card.innerHTML = `
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-gray-400 text-sm">${new Date(item.cct_created).toLocaleDateString()}</span>
-                                <span class="${statusColor} text-xs uppercase font-semibold">${item.cct_status || 'draft'}</span>
+                            <div class="space-y-2 mb-4 text-sm">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Fecha:</span>
+                                    <span class="text-white font-medium">${new Date(item.cct_created).toLocaleDateString()}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Tarea:</span>
+                                    <span class="text-white font-medium">${item.tarea || 'Sin tarea'}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Status:</span>
+                                    <span class="${item.cct_status === 'published' ? 'text-green-400' : 'text-yellow-400'} font-medium uppercase">${item.cct_status || 'draft'}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Monto:</span>
+                                    <span class="text-white font-bold text-lg">$${formattedAmount}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Tipo:</span>
+                                    <span class="text-white">${item.comision || 'Sin tipo'}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Observación:</span>
+                                    <p class="text-white mt-1 bg-gray-800 p-2 rounded">${item.observaciones || 'Sin observaciones'}</p>
+                                </div>
                             </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-white font-medium">${item.comision || 'Sin tipo'}</span>
-                                <span class="text-white font-bold">$${formattedAmount}</span>
-                            </div>
-                            <p class="text-gray-400 text-sm mt-2">${item.observaciones || 'Sin observaciones'}</p>
                         `;
                         requestsContainer.appendChild(card);
                     });
