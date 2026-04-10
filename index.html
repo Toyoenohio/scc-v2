@@ -158,6 +158,33 @@
         </div>
     </div>
 
+    <!-- User Detail View (for admin) -->
+    <div id="user-detail-view" class="hidden min-h-screen bg-scc-bg pb-20">
+        <header class="flex items-center p-6 bg-scc-bg text-white border-b border-gray-800">
+            <button onclick="showView('admin-comisiones')" class="mr-4 text-white hover:text-gray-300 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+            </button>
+            <h2 class="text-xl font-bold tracking-tight" id="user-detail-title">Detalle de Usuario</h2>
+        </header>
+        <div class="p-4 space-y-4">
+            <!-- Balance Card -->
+            <div class="bg-scc-blue p-6 rounded-2xl text-white shadow-lg">
+                <p class="text-sm font-medium">Monto Disponible</p>
+                <p id="user-detail-balance" class="text-4xl font-extrabold mt-3 tracking-tight">$0.00</p>
+            </div>
+            
+            <!-- Last 3 Requests -->
+            <div>
+                <h3 class="text-white font-semibold mb-3">Últimas 3 Solicitudes</h3>
+                <div id="user-detail-requests" class="space-y-3">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Referencias al DOM
         const loginView = document.getElementById('login-view');
@@ -183,6 +210,7 @@
             dashboardView.classList.add('hidden');
             solicitudView.classList.add('hidden');
             document.getElementById('admin-comisiones-view').classList.add('hidden');
+            document.getElementById('user-detail-view').classList.add('hidden');
 
             if (view === 'dashboard') {
                 dashboardView.classList.remove('hidden');
@@ -191,15 +219,18 @@
             } else if (view === 'solicitud') {
                 solicitudView.classList.remove('hidden');
                 document.getElementById('sol_fecha').valueAsDate = new Date();
-                toggleAdminNav(); // También verificar en solicitud
+                toggleAdminNav();
             } else if (view === 'admin-comisiones') {
                 document.getElementById('admin-comisiones-view').classList.remove('hidden');
-                toggleAdminNav(); // IMPORTANTE: Mostrar menú en vista admin
+                toggleAdminNav();
                 fetchAdminComisiones();
+            } else if (view === 'user-detail') {
+                document.getElementById('user-detail-view').classList.remove('hidden');
+                toggleAdminNav();
             } else {
                 loginView.classList.remove('hidden');
                 loginForm.reset();
-                document.getElementById('admin-nav').classList.add('hidden'); // Ocultar menú en login
+                document.getElementById('admin-nav').classList.add('hidden');
             }
         }
 
@@ -346,7 +377,9 @@
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-400">Usuario:</span>
-                                <span class="text-white">${item.usuario || 'Sin usuario'}</span>
+                                <button onclick="showUserDetail('${item.usuario || ''}')" class="text-scc-blue font-semibold hover:underline bg-transparent border-none p-0 cursor-pointer">
+                                    ${item.usuario || 'Sin usuario'}
+                                </button>
                             </div>
                             <div>
                                 <span class="text-gray-400">Observación:</span>
@@ -390,6 +423,80 @@
             } catch (err) {
                 showToast(err.message, true);
             }
+
+
+        // Mostrar detalle de usuario (para admin)
+        async function showUserDetail(username) {
+            if (!username) return;
+            
+            const token = localStorage.getItem('wp_token');
+            if (!token) return;
+            
+            // Actualizar título
+            document.getElementById('user-detail-title').textContent = `Detalle: ${username}`;
+            
+            try {
+                // Obtener todas las comisiones del usuario
+                const response = await fetch(`https://scc.ciwok.com/wp-json/jet-cct/comisiones_dec/?usuario=${username}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Error al cargar datos del usuario');
+                
+                const data = await response.json();
+                
+                // Calcular balance total
+                const balanceTotal = data.reduce((sum, item) => {
+                    return sum + (parseFloat(item.monto_comision || item.monto) || 0);
+                }, 0);
+                
+                document.getElementById('user-detail-balance').textContent = 
+                    `$${balanceTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                
+                // Obtener últimas 3 solicitudes (ordenadas por fecha más reciente)
+                const ultimasSolicitudes = data
+                    .sort((a, b) => new Date(b.cct_created) - new Date(a.cct_created))
+                    .slice(0, 3);
+                
+                const requestsContainer = document.getElementById('user-detail-requests');
+                requestsContainer.innerHTML = '';
+                
+                if (ultimasSolicitudes.length === 0) {
+                    requestsContainer.innerHTML = '<p class="text-gray-400 text-center py-4">No hay solicitudes registradas.</p>';
+                } else {
+                    ultimasSolicitudes.forEach(item => {
+                        const amountRaw = parseFloat(item.monto_comision || item.monto) || 0;
+                        const formattedAmount = Math.abs(amountRaw).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                        const statusColor = item.cct_status === 'published' ? 'text-green-400' : 'text-yellow-400';
+                        
+                        const card = document.createElement('div');
+                        card.className = 'bg-scc-dark-card p-4 rounded-xl border border-gray-800';
+                        card.innerHTML = `
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-400 text-sm">${new Date(item.cct_created).toLocaleDateString()}</span>
+                                <span class="${statusColor} text-xs uppercase font-semibold">${item.cct_status || 'draft'}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-white font-medium">${item.comision || 'Sin tipo'}</span>
+                                <span class="text-white font-bold">$${formattedAmount}</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mt-2">${item.observaciones || 'Sin observaciones'}</p>
+                        `;
+                        requestsContainer.appendChild(card);
+                    });
+                }
+                
+                // Mostrar vista
+                showView('user-detail');
+                
+            } catch (err) {
+                showToast('Error: ' + err.message, true);
+            }
+        }
         }
 
         // Navegación admin
