@@ -191,12 +191,15 @@
             } else if (view === 'solicitud') {
                 solicitudView.classList.remove('hidden');
                 document.getElementById('sol_fecha').valueAsDate = new Date();
+                toggleAdminNav(); // También verificar en solicitud
             } else if (view === 'admin-comisiones') {
                 document.getElementById('admin-comisiones-view').classList.remove('hidden');
+                toggleAdminNav(); // IMPORTANTE: Mostrar menú en vista admin
                 fetchAdminComisiones();
             } else {
                 loginView.classList.remove('hidden');
                 loginForm.reset();
+                document.getElementById('admin-nav').classList.add('hidden'); // Ocultar menú en login
             }
         }
 
@@ -220,16 +223,26 @@
         // Verificar si usuario es admin
         function checkIsAdmin() {
             const username = localStorage.getItem('wp_username');
-            return ADMIN_USERS.includes(username);
+            const isAdmin = ADMIN_USERS.includes(username);
+            console.log('[Admin Check] Usuario:', username, 'Es admin:', isAdmin);
+            return isAdmin;
         }
 
-        // Mostrar/ocultar navegación de admin
+        // Mostrar/ocultar navegación de admin - siempre llamar al cargar vista
         function toggleAdminNav() {
             const adminNav = document.getElementById('admin-nav');
+            const username = localStorage.getItem('wp_username');
+            console.log('[Admin Nav] Verificando navegación para:', username);
+            
             if (checkIsAdmin()) {
+                console.log('[Admin Nav] Mostrando menú admin');
                 adminNav.classList.remove('hidden');
+                // Forzar reflow para asegurar que se muestre
+                adminNav.style.display = 'block';
             } else {
+                console.log('[Admin Nav] Ocultando menú admin');
                 adminNav.classList.add('hidden');
+                adminNav.style.display = 'none';
             }
         }
 
