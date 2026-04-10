@@ -45,7 +45,7 @@
         </div>
     </div>
 
-    <div id="dashboard-view" class="hidden pb-10">
+    <div id="dashboard-view" class="hidden pb-24">
         <header class="flex justify-between items-center p-6 bg-scc-bg text-white">
             <h1 class="text-3xl font-bold tracking-tight">SCC</h1>
             <button id="logout-btn" class="text-white hover:text-gray-300 transition-colors" title="Cerrar sesión">
@@ -352,7 +352,7 @@
                     </div>
                     <p class="text-blue-200 text-xs mt-1">${data.length} solicitud(es) en espera</p>
                 `;
-                listEl.appendChild(totalBlock);
+                comisionesContainer.appendChild(totalBlock);
 
                 data.forEach((item) => {
                     const card = document.createElement('div');
@@ -390,7 +390,7 @@
                             Marcar como Pagado
                         </button>
                     `;
-                    listEl.appendChild(card);
+                    comisionesContainer.appendChild(card);
                 });
 
             } catch (err) {
@@ -546,7 +546,7 @@
                                 
                                 // Mostrar notificación al usuario
                                 if (confirm('¡Hay una nueva versión de la app disponible! ¿Deseas actualizar ahora?')) {
-                                    newWorker.postMessage('skipWaiting');
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
                                     window.location.reload();
                                 }
                             }
@@ -568,16 +568,18 @@
             });
         }
 
-        // Botón manual para forzar actualización (útil para testing)
+        // Botón manual para forzar actualización (versión nuclear - destruye caché)
         window.forceUpdate = function() {
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistration().then(reg => {
-                    if (reg) {
-                        reg.update().then(() => {
-                            console.log('[App] Verificación de actualización forzada');
-                            showToast('Buscando actualizaciones...');
-                        });
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        registration.unregister();
                     }
+                    console.log("Caché destruida. Recargando...");
+                    showToast('Actualizando app...');
+                    setTimeout(() => {
+                        window.location.reload(true);
+                    }, 1000);
                 });
             }
         };
