@@ -806,10 +806,27 @@
         document.getElementById('btn-volver-dashboard').addEventListener('click', () => showView('dashboard'));
         document.getElementById('btn-transferir').addEventListener('click', () => showToast('La opción de Transferencia aún no está disponible.'));
 
+        // Health check - verificar si el servidor responde
+        async function checkServerHealth() {
+            try {
+                const response = await fetch('https://scc.ciwok.com/wp-json/', { 
+                    method: 'GET',
+                    mode: 'no-cors' // Esto evita errores CORS en el check
+                });
+                console.log('[Health Check] Servidor responde');
+                return true;
+            } catch (err) {
+                console.error('[Health Check] Servidor no responde:', err);
+                return false;
+            }
+        }
+
         // Verificar sesión inicial
         document.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('wp_token');
             if (token) showView('dashboard');
+            // Log estado del servidor
+            checkServerHealth();
         });
 
         // Login
@@ -842,7 +859,8 @@
                 }
             } catch (err) {
                 hideLoader();
-                loginError.textContent = 'Error de conexión con el servidor.';
+                console.error('[Login Error]', err);
+                loginError.textContent = 'Error de conexión: ' + err.message;
                 loginError.classList.remove('hidden');
             }
         });
