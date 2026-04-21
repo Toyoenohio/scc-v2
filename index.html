@@ -317,10 +317,25 @@
         }
 
         // Helper function to format date to dd/mm/yyyy
-        function formatDate(dateString) {
-            if (!dateString) return 'Sin fecha';
-            const date = new Date(dateString);
+        function formatDate(dateValue) {
+            if (!dateValue) return 'Sin fecha';
+            
+            let date;
+            
+            // Si es un número (timestamp Unix en segundos), convertir a milisegundos
+            if (typeof dateValue === 'number' || !isNaN(Number(dateValue))) {
+                const timestamp = Number(dateValue);
+                // Si el timestamp es menor a 10 dígitos, está en segundos (multiplicar por 1000)
+                // Si es mayor, ya está en milisegundos
+                const ms = timestamp < 10000000000 ? timestamp * 1000 : timestamp;
+                date = new Date(ms);
+            } else {
+                // Si es string, usar directamente
+                date = new Date(dateValue);
+            }
+            
             if (isNaN(date.getTime())) return 'Sin fecha';
+            
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
@@ -1177,9 +1192,22 @@
 
                 // Ordenamiento
                 data.sort((a, b) => {
-                    const dateA = new Date(a.fecha).getTime();
-                    const dateB = new Date(b.fecha).getTime();
-                    if (!isNaN(dateA) && !isNaN(dateB) && dateB !== dateA) return dateB - dateA; 
+                    let dateA = a.fecha;
+                    let dateB = b.fecha;
+                    
+                    // Convertir timestamps de segundos a milisegundos si es necesario
+                    if (typeof dateA === 'number' || !isNaN(Number(dateA))) {
+                        const tsA = Number(dateA);
+                        dateA = tsA < 10000000000 ? tsA * 1000 : tsA;
+                    }
+                    if (typeof dateB === 'number' || !isNaN(Number(dateB))) {
+                        const tsB = Number(dateB);
+                        dateB = tsB < 10000000000 ? tsB * 1000 : tsB;
+                    }
+                    
+                    const timeA = new Date(dateA).getTime();
+                    const timeB = new Date(dateB).getTime();
+                    if (!isNaN(timeA) && !isNaN(timeB) && timeB !== timeA) return timeB - timeA; 
                     return b._ID - a._ID; 
                 });
 
@@ -1190,7 +1218,7 @@
                     const conceptText = item.tarea || "Registro";
                     const groupText = item.grupo || "Ciwok";
                     const detailsText = item.observaciones || item.observacion || "Sin detalles";
-                    const dateText = item.fecha || "Sin fecha"; 
+                    const dateText = formatDate(item.fecha); 
                     const quantityText = item.cantidad ? `Cantidad: ${item.cantidad}` : "";
                     
                     const amountRaw = parseFloat(item.monto_comision || item.monto) || 0;
