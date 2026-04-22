@@ -409,18 +409,39 @@
             return ADMIN_USERS.includes(normalizedUsername);
         }
 
-        // Mostrar/ocultar navegación de admin
+        // Mostrar/ocultar navegación - visible para todos, pero con opciones limitadas por rol
         function toggleAdminNav() {
             const adminNav = document.getElementById('admin-nav');
+            const navComisiones = document.getElementById('nav-comisiones');
+            const navTrabajadores = document.getElementById('nav-trabajadores');
+            const navTraspaso = document.getElementById('nav-traspaso');
+            const navDashboard = document.getElementById('nav-dashboard');
             
-            if (checkIsAdmin()) {
-                adminNav.classList.remove('hidden');
-                adminNav.style.display = 'block';
-                adminNav.style.visibility = 'visible';
-                adminNav.style.opacity = '1';
+            const isAdmin = checkIsAdmin();
+            
+            // Mostrar menú para todos los usuarios
+            adminNav.classList.remove('hidden');
+            adminNav.style.display = 'block';
+            adminNav.style.visibility = 'visible';
+            adminNav.style.opacity = '1';
+            
+            // Configurar visibilidad de botones según rol
+            if (isAdmin) {
+                // Admin ve todos los botones
+                navComisiones.style.display = 'flex';
+                navTrabajadores.style.display = 'flex';
+                navTraspaso.style.display = 'flex';
+                navDashboard.style.display = 'flex';
+                
+                // Remover clase de deshabilitado si existe
+                navComisiones.classList.remove('opacity-30', 'pointer-events-none');
+                navTrabajadores.classList.remove('opacity-30', 'pointer-events-none');
             } else {
-                adminNav.classList.add('hidden');
-                adminNav.style.display = 'none';
+                // Usuario normal solo ve Dashboard y Traspaso
+                navComisiones.style.display = 'none';
+                navTrabajadores.style.display = 'none';
+                navTraspaso.style.display = 'flex';
+                navDashboard.style.display = 'flex';
             }
         }
 
@@ -860,11 +881,19 @@
 
         // Navegación admin
         document.getElementById('nav-comisiones').addEventListener('click', () => {
+            if (!checkIsAdmin()) {
+                showToast('Acceso restringido solo para administradores', true);
+                return;
+            }
             setActiveNav('comisiones');
             showView('admin-comisiones');
         });
 
         document.getElementById('nav-trabajadores').addEventListener('click', () => {
+            if (!checkIsAdmin()) {
+                showToast('Acceso restringido solo para administradores', true);
+                return;
+            }
             setActiveNav('trabajadores');
             showView('trabajadores');
         });
