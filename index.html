@@ -1108,7 +1108,7 @@
         // Navegación
         document.getElementById('btn-solicitud').addEventListener('click', () => showView('solicitud'));
         document.getElementById('btn-volver-dashboard').addEventListener('click', () => showView('dashboard'));
-        document.getElementById('btn-transferir').addEventListener('click', () => showToast('La opción de Transferencia aún no está disponible.'));
+        document.getElementById('btn-transferir').addEventListener('click', () => showView('traspaso'));
 
         // Health check - verificar si el servidor responde
         async function checkServerHealth() {
