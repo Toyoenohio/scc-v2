@@ -506,10 +506,10 @@
                 navTrabajadores.classList.remove('opacity-30', 'pointer-events-none');
                 navPdv.classList.remove('opacity-30', 'pointer-events-none');
             } else {
-                // Usuario normal solo ve Dashboard y Traspaso
+                // Usuario normal ve Dashboard, Traspaso y PDV
                 navComisiones.style.display = 'none';
                 navTrabajadores.style.display = 'none';
-                navPdv.style.display = 'none';
+                navPdv.style.display = 'flex';
                 navTraspaso.style.display = 'flex';
                 navDashboard.style.display = 'flex';
             }
@@ -980,10 +980,6 @@
         });
 
         document.getElementById('nav-pdv').addEventListener('click', () => {
-            if (!checkIsAdmin()) {
-                showToast('Acceso restringido solo para administradores', true);
-                return;
-            }
             setActiveNav('pdv');
             showView('pdv');
         });
