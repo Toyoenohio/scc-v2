@@ -1141,6 +1141,7 @@
             showLoader('Registrando comisión PDV...');
 
             const monto = parseFloat(document.getElementById('pdv-monto').value);
+            const montoNegativo = (monto * -1).toFixed(2);
             const fechaInput = document.getElementById('pdv-fecha').value;
             const grupo = pdvLocalSeleccionado === 'barcelona' ? 'PDV Barcelona' : 'PDV Lecheria';
             
@@ -1149,8 +1150,8 @@
 
             const payload = {
                 usuario: username,
-                monto: monto.toFixed(2),
-                monto_comision: monto.toFixed(2),
+                monto: montoNegativo,
+                monto_comision: montoNegativo,
                 tarea: 'credito PDV',
                 grupo: grupo,
                 fecha: fechaTimestamp,
