@@ -158,6 +158,12 @@
                 </svg>
                 <span class="text-xs mt-1">Traspaso</span>
             </button>
+            <button id="nav-pdv" class="flex flex-col items-center justify-center w-full h-full text-gray-400 active:opacity-70">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+                <span class="text-xs mt-1">PDV</span>
+            </button>
         </div>
     </nav>
 
@@ -186,6 +192,61 @@
             </div>
             <div id="trabajadores-loading" class="text-scc-blue font-semibold hidden text-center py-4">Cargando...</div>
             <div id="trabajadores-list" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <!-- PDV View (Admin Only) -->
+    <div id="pdv-view" class="hidden min-h-screen bg-scc-bg pb-20">
+        <header class="flex items-center p-6 bg-scc-bg text-white border-b border-gray-800">
+            <h2 class="text-xl font-bold tracking-tight">PDV - Punto de Venta</h2>
+        </header>
+        <div class="p-4">
+            <form id="form-pdv" class="space-y-5">
+                <!-- Monto -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Monto</label>
+                    <input type="number" id="pdv-monto" required min="0.01" step="0.01" 
+                        class="w-full p-3 bg-scc-dark-card text-white rounded-xl border border-gray-700 focus:border-scc-blue focus:outline-none"
+                        placeholder="0.00">
+                </div>
+
+                <!-- Selección de Local -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Local</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" id="btn-pdv-barcelona" 
+                            class="pdv-local-btn bg-scc-dark-card border-2 border-gray-700 text-white p-4 rounded-xl font-semibold transition-all hover:border-scc-blue"
+                            onclick="selectPDVLocal('barcelona')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            Pizza de Verdad Barcelona
+                        </button>
+                        <button type="button" id="btn-pdv-lecheria" 
+                            class="pdv-local-btn bg-scc-dark-card border-2 border-gray-700 text-white p-4 rounded-xl font-semibold transition-all hover:border-scc-blue"
+                            onclick="selectPDVLocal('lecheria')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            Pizza de Verdad Lechería
+                        </button>
+                    </div>
+                    <input type="hidden" id="pdv-local" required>
+                </div>
+
+                <!-- Fecha del Pedido -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Fecha del Pedido</label>
+                    <input type="date" id="pdv-fecha" required 
+                        class="w-full p-3 bg-scc-dark-card text-white rounded-xl border border-gray-700 focus:border-scc-blue focus:outline-none">
+                </div>
+
+                <!-- Botón Submit -->
+                <button type="submit" id="btn-pdv-submit" 
+                    class="w-full bg-scc-blue hover:bg-blue-600 text-white py-4 rounded-xl font-semibold transition-colors mt-6">
+                    Registrar Comisión PDV
+                </button>
+            </form>
         </div>
     </div>
 
@@ -378,6 +439,11 @@
                 document.getElementById('traspaso-view').classList.remove('hidden');
                 toggleAdminNav();
                 loadTraspasoForm();
+            } else if (view === 'pdv') {
+                document.getElementById('pdv-view').classList.remove('hidden');
+                toggleAdminNav();
+                // Set fecha actual por defecto
+                document.getElementById('pdv-fecha').valueAsDate = new Date();
             } else {
                 loginView.classList.remove('hidden');
                 loginForm.reset();
@@ -415,6 +481,7 @@
             const navComisiones = document.getElementById('nav-comisiones');
             const navTrabajadores = document.getElementById('nav-trabajadores');
             const navTraspaso = document.getElementById('nav-traspaso');
+            const navPdv = document.getElementById('nav-pdv');
             const navDashboard = document.getElementById('nav-dashboard');
             
             const isAdmin = checkIsAdmin();
@@ -431,15 +498,18 @@
                 navComisiones.style.display = 'flex';
                 navTrabajadores.style.display = 'flex';
                 navTraspaso.style.display = 'flex';
+                navPdv.style.display = 'flex';
                 navDashboard.style.display = 'flex';
                 
                 // Remover clase de deshabilitado si existe
                 navComisiones.classList.remove('opacity-30', 'pointer-events-none');
                 navTrabajadores.classList.remove('opacity-30', 'pointer-events-none');
+                navPdv.classList.remove('opacity-30', 'pointer-events-none');
             } else {
                 // Usuario normal solo ve Dashboard y Traspaso
                 navComisiones.style.display = 'none';
                 navTrabajadores.style.display = 'none';
+                navPdv.style.display = 'none';
                 navTraspaso.style.display = 'flex';
                 navDashboard.style.display = 'flex';
             }
@@ -450,6 +520,7 @@
             const navComisiones = document.getElementById('nav-comisiones');
             const navTrabajadores = document.getElementById('nav-trabajadores');
             const navTraspaso = document.getElementById('nav-traspaso');
+            const navPdv = document.getElementById('nav-pdv');
             const navDashboard = document.getElementById('nav-dashboard');
 
             // Reset all
@@ -459,6 +530,8 @@
             navTrabajadores.classList.add('text-gray-400');
             navTraspaso.classList.remove('text-scc-blue');
             navTraspaso.classList.add('text-gray-400');
+            navPdv.classList.remove('text-scc-blue');
+            navPdv.classList.add('text-gray-400');
             navDashboard.classList.remove('text-scc-blue');
             navDashboard.classList.add('text-gray-400');
 
@@ -472,6 +545,9 @@
             } else if (view === 'traspaso') {
                 navTraspaso.classList.remove('text-gray-400');
                 navTraspaso.classList.add('text-scc-blue');
+            } else if (view === 'pdv') {
+                navPdv.classList.remove('text-gray-400');
+                navPdv.classList.add('text-scc-blue');
             } else {
                 navDashboard.classList.remove('text-gray-400');
                 navDashboard.classList.add('text-scc-blue');
@@ -903,6 +979,15 @@
             showView('traspaso');
         });
 
+        document.getElementById('nav-pdv').addEventListener('click', () => {
+            if (!checkIsAdmin()) {
+                showToast('Acceso restringido solo para administradores', true);
+                return;
+            }
+            setActiveNav('pdv');
+            showView('pdv');
+        });
+
         document.getElementById('nav-dashboard').addEventListener('click', () => {
             setActiveNav('dashboard');
             showView('dashboard');
@@ -1015,6 +1100,103 @@
                 listEl.innerHTML = '<p class="text-gray-400 text-center">Error al cargar traspasos.</p>';
             }
         }
+
+        // Funciones para PDV
+        let pdvLocalSeleccionado = null;
+
+        function selectPDVLocal(local) {
+            pdvLocalSeleccionado = local;
+            document.getElementById('pdv-local').value = local;
+            
+            // Actualizar estilos de botones
+            const btnBarcelona = document.getElementById('btn-pdv-barcelona');
+            const btnLecheria = document.getElementById('btn-pdv-lecheria');
+            
+            if (local === 'barcelona') {
+                btnBarcelona.classList.remove('border-gray-700', 'bg-scc-dark-card');
+                btnBarcelona.classList.add('border-scc-blue', 'bg-blue-900/30');
+                btnLecheria.classList.remove('border-scc-blue', 'bg-blue-900/30');
+                btnLecheria.classList.add('border-gray-700', 'bg-scc-dark-card');
+            } else {
+                btnLecheria.classList.remove('border-gray-700', 'bg-scc-dark-card');
+                btnLecheria.classList.add('border-scc-blue', 'bg-blue-900/30');
+                btnBarcelona.classList.remove('border-scc-blue', 'bg-blue-900/30');
+                btnBarcelona.classList.add('border-gray-700', 'bg-scc-dark-card');
+            }
+        }
+
+        // Enviar formulario PDV
+        document.getElementById('form-pdv').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = localStorage.getItem('wp_token');
+            const username = localStorage.getItem('wp_username');
+            
+            if (!token || !username) {
+                showToast('Sesión no válida', true);
+                return;
+            }
+
+            if (!pdvLocalSeleccionado) {
+                showToast('Selecciona un local (Barcelona o Lechería)', true);
+                return;
+            }
+
+            showLoader('Registrando comisión PDV...');
+
+            const monto = parseFloat(document.getElementById('pdv-monto').value);
+            const fechaInput = document.getElementById('pdv-fecha').value;
+            const grupo = pdvLocalSeleccionado === 'barcelona' ? 'PDV Barcelona' : 'PDV Lecheria';
+            
+            // Convertir fecha a timestamp Unix (segundos)
+            const fechaTimestamp = Math.floor(new Date(fechaInput).getTime() / 1000).toString();
+
+            const payload = {
+                usuario: username,
+                monto: monto.toFixed(2),
+                monto_comision: monto.toFixed(2),
+                tarea: 'credito PDV',
+                grupo: grupo,
+                fecha: fechaTimestamp,
+                observaciones: '',
+                cantidad: '1',
+                tipo_de_pago: '',
+                cct_status: 'publish',
+                autor: ''
+            };
+
+            try {
+                const response = await fetch('https://scc.ciwok.com/wp-json/jet-cct/comisiones_dec', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                hideLoader();
+
+                if (response.ok) {
+                    showToast('Comisión PDV registrada exitosamente');
+                    document.getElementById('form-pdv').reset();
+                    pdvLocalSeleccionado = null;
+                    // Resetear estilos de botones
+                    document.getElementById('btn-pdv-barcelona').classList.remove('border-scc-blue', 'bg-blue-900/30');
+                    document.getElementById('btn-pdv-barcelona').classList.add('border-gray-700', 'bg-scc-dark-card');
+                    document.getElementById('btn-pdv-lecheria').classList.remove('border-scc-blue', 'bg-blue-900/30');
+                    document.getElementById('btn-pdv-lecheria').classList.add('border-gray-700', 'bg-scc-dark-card');
+                    // Restablecer fecha actual
+                    document.getElementById('pdv-fecha').valueAsDate = new Date();
+                } else {
+                    const errData = await response.json();
+                    throw new Error(errData.message || 'Error al registrar la comisión');
+                }
+            } catch (error) {
+                hideLoader();
+                showToast(error.message, true);
+            }
+        });
 
         // Enviar traspaso
         document.getElementById('form-traspaso').addEventListener('submit', async (e) => {
